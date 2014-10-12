@@ -17,6 +17,15 @@ namespace euler
 			return (n / ((int)Math.Pow(10, d))) % 10;
 		}
 
+		/// <summary>
+		/// Sequence of digits in n, from most to least significant.
+		/// </summary>
+		public static IEnumerable<int> DigitSeq(int n) {
+			for (int i = Digits(n) - 1; i >= 0; --i) {
+				yield return Digit(n, i);
+			}
+		}
+
 		public static IEnumerable<int> Primes() {
 			yield return 2;
 			HashSet<int> primes = new HashSet<int>();

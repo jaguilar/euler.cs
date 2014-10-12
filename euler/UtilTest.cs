@@ -25,6 +25,11 @@ namespace euler
 		}
 
 		[Test()]
+		public void TestDigitSeq() {
+			Assert.That(Util.DigitSeq(107), Is.EqualTo(new [] { 1, 0, 7 }));
+		}
+
+		[Test()]
 		public void TestPrimes() {
 			var ps = Util.Primes().Take(100);
 			Assert.That(ps, Has.Some.EqualTo(2));
