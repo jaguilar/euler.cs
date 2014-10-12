@@ -1,4 +1,6 @@
 using System;
+using System.Linq;
+using System.Collections.Generic;
 
 namespace euler
 {
@@ -13,6 +15,21 @@ namespace euler
 		/// </summary>
 		public static int Digit(int n, int d) {
 			return (n / ((int)Math.Pow(10, d))) % 10;
+		}
+
+		public static IEnumerable<int> Primes() {
+			yield return 2;
+			HashSet<int> primes = new HashSet<int>();
+
+			int i = 3;
+			while (true) {
+				if (!primes.Where(x => i % x == 0).Any()) {
+					primes.Add(i);
+					yield return i;
+				}
+
+				i += 2;
+			}
 		}
 	}
 }
