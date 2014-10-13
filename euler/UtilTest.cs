@@ -30,6 +30,27 @@ namespace euler
 		}
 
 		[Test()]
+		public void TestPermutationIndexes() {
+			Assert.That(Util.IndexPermutations(2), Is.EquivalentTo(new int[][] { new int[] { 0, 1}, new int[] {1, 0} }));
+			Assert.That(Util.IndexPermutations(5), Has.Some.EquivalentTo(new int[]{ 4, 2, 3, 1, 0 }));
+			Assert.That(Util.IndexPermutations(5).Distinct().Count(), Is.EqualTo(5 * 4 * 3 * 2 * 1));
+		}
+
+		[Test()]
+		public void TestPermutations() {
+			var permuted = Util.Permutations(new[] { "abc", "def", "ghi" });
+			Assert.That(permuted, Has.Some.EquivalentTo(new[]{"def", "abc", "ghi"}));
+			Assert.That(permuted.Distinct().Count(), Is.EqualTo(3 * 2 * 1));
+		}
+
+		[Test()]
+		public void TestCombinations() {
+			var combined = Util.Combinations(new[] { "abc", "def", "ghi" }, 2);
+			Assert.That(combined, Has.Some.EquivalentTo(new[] { "def", "ghi" }));
+			Assert.That(combined.Distinct().Count(), Is.EqualTo(3));
+		}
+
+		[Test()]
 		public void TestPrimes() {
 			var ps = Util.Primes().Take(100);
 			Assert.That(ps, Has.Some.EqualTo(2));
