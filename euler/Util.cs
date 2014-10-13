@@ -30,10 +30,34 @@ namespace euler
 			}
 		}
 
-		public static IEnumerable<IEnumerable<T>> Combinations<T>(IEnumerable<T> seq, int c)
+		/// <summary>
+		/// Return all combinations of size c from the elements in Seq.
+		/// This is calculated on a streaming basis, so it will return combinations of infinitely-sized
+		/// input sequences. The combinations are by index, not by value.
+		/// </summary>
+		/// <param name="seq">A sequence, possibly infinitely long.</param>
+		/// <param name="c">The number of elements to choose from.</param>
+		/// <typeparam name="T">The 1st type parameter.</typeparam>
+		public static IEnumerable<IEnumerable<T>> Choose<T>(IEnumerable<T> seq, int c)
 		{
-			T[] xs = seq.ToArray();
-			return IndexCombinations(xs.Length, c).Select(SelectIndexes(xs));
+			int i = c - 1;
+			while (true) {
+				var lastElement = seq.ElementAtOrDefault(i);
+				if (lastElement == null) {
+					yield break;
+				}
+
+				if (c == 1) {
+					// We're only to gather one choice, so just iterate through.
+					yield return lastElement.Yield();
+				} else {
+					foreach (var childCombination in Combinations(seq.Take(i), c - 1)) {
+						yield return Enumerable.Concat(childCombination, lastElement.Yield());
+					}
+				}
+
+				++i;
+			}
 		}
 
 		// Given a sequence, generate possible permutations of that sequence.
@@ -145,6 +169,22 @@ namespace euler
 
 				i += 2;
 			}
+		}
+	}
+
+	// From StackOverflow, license unknown. Will happily take down if asked.
+	public static class IEnumerableExt
+	{
+		/// <summary>
+		/// Wraps this object instance into an IEnumerable&lt;T&gt;
+		/// consisting of a single item.
+		/// </summary>
+		/// <typeparam name="T"> Type of the object. </typeparam>
+		/// <param name="item"> The instance that will be wrapped. </param>
+		/// <returns> An IEnumerable&lt;T&gt; consisting of a single item. </returns>
+		public static IEnumerable<T> Yield<T>(this T item)
+		{
+			yield return item;
 		}
 	}
 }
