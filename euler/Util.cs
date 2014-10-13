@@ -30,36 +30,6 @@ namespace euler
 			}
 		}
 
-		/// <summary>
-		/// Return all combinations of size c from the elements in Seq.
-		/// This is calculated on a streaming basis, so it will return combinations of infinitely-sized
-		/// input sequences. The combinations are by index, not by value.
-		/// </summary>
-		/// <param name="seq">A sequence, possibly infinitely long.</param>
-		/// <param name="c">The number of elements to choose from.</param>
-		/// <typeparam name="T">The 1st type parameter.</typeparam>
-		public static IEnumerable<IEnumerable<T>> Choose<T>(IEnumerable<T> seq, int c)
-		{
-			int i = c - 1;
-			while (true) {
-				var lastElement = seq.ElementAtOrDefault(i);
-				if (lastElement == null) {
-					yield break;
-				}
-
-				if (c == 1) {
-					// We're only to gather one choice, so just iterate through.
-					yield return lastElement.Yield();
-				} else {
-					foreach (var childCombination in Combinations(seq.Take(i), c - 1)) {
-						yield return Enumerable.Concat(childCombination, lastElement.Yield());
-					}
-				}
-
-				++i;
-			}
-		}
-
 		// Given a sequence, generate possible permutations of that sequence.
 		public static IEnumerable<IEnumerable<T>> Permutations<T>(IEnumerable<T> seq)
 		{
@@ -168,6 +138,38 @@ namespace euler
 				}
 
 				i += 2;
+			}
+		}
+	}
+
+	public static class ChooseExt
+	{
+		/// <summary>
+		/// Return all combinations of size c from the elements in Seq.
+		/// This is calculated on a streaming basis, so it will return combinations of infinitely-sized
+		/// input sequences. The combinations are by index, not by value.
+		/// </summary>
+		/// <param name="seq">A sequence, possibly infinitely long.</param>
+		/// <param name="numToChoose">The number of elements to choose from.</param>
+		/// <typeparam name="T">The type of object in the sequence we are choosing against.</typeparam>
+		public static IEnumerable<IEnumerable<T>> Choose<T>(this IEnumerable<T> seq, int numToChoose) {
+			int i = numToChoose - 1;
+			while (true) {
+				var lastElement = seq.ElementAtOrDefault(i);
+				if (lastElement == null) {
+					yield break;
+				}
+
+				if (numToChoose == 1) {
+					// We're only to gather one choice, so just iterate through.
+					yield return lastElement.Yield();
+				} else {
+					foreach (var childCombination in seq.Take(i).Choose(numToChoose - 1)) {
+						yield return Enumerable.Concat(childCombination, lastElement.Yield());
+					}
+				}
+
+				++i;
 			}
 		}
 	}

@@ -45,9 +45,9 @@ namespace euler
 
 		[Test()]
 		public void TestCombinations() {
-			var combined = Util.Choose(new[] { "abc", "def", "ghi" }, 2);
-			Assert.That(combined, Has.Some.EquivalentTo(new[] { "def", "ghi" }));
-			Assert.That(combined.Distinct().Count(), Is.EqualTo(3));
+			var c = (new[] { "abc", "def", "ghi" }).Choose(2);
+			Assert.That(c, Has.Some.EquivalentTo(new[] { "def", "ghi" }));
+			Assert.That(c.Distinct().Count(), Is.EqualTo(3));
 		}
 
 		[Test()]
