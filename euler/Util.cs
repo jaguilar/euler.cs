@@ -1,10 +1,12 @@
 using System;
 using System.Linq;
+using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
 
 namespace euler
 {
+
 	public static class Util
 	{
 		public static int Digits(int n)
@@ -28,6 +30,10 @@ namespace euler
 			for (int i = Digits(n) - 1; i >= 0; --i) {
 				yield return Digit(n, i);
 			}
+		}
+
+		public static int DigitCat(IEnumerable<int> s) {
+			return s.Aggregate(0, (agg, digit) => agg * 10 + digit);
 		}
 
 		// Given a sequence, generate possible permutations of that sequence.
@@ -125,21 +131,84 @@ namespace euler
 			}
 		}
 
-		public static IEnumerable<int> Primes()
-		{
-			yield return 2;
-			HashSet<int> primes = new HashSet<int>();
+		public class PrimeSeq : IEnumerable<int> {
+			private List<int> primes = new List<int>();
+			private HashSet<int> primesHash = new HashSet<int>();
 
-			int i = 3;
-			while (true) {
-				if (!primes.Where(x => i % x == 0).Any()) {
-					primes.Add(i);
-					yield return i;
+			// ONLY for use by the Advance method.
+			private IEnumerator<int> internalEnumerator;
+
+			public PrimeSeq()
+			{
+				internalEnumerator = PrimeGen().GetEnumerator();
+			}
+
+			/// <summary>
+			/// Special implementation of Contains, which looks at the cache of primes
+			/// rather than iterating from the beginning.
+			/// </summary>
+			public bool Contains(int x) {
+				while (primes[primes.Count - 1] < x) {
+					Advance();
 				}
+				return primesHash.Contains(x);
+			}
 
-				i += 2;
+			System.Collections.IEnumerator System.Collections.IEnumerable.GetEnumerator()
+			{
+				return this.GetEnumerator();
+			}
+
+			public IEnumerator<int> GetEnumerator() {
+				return Yielder().GetEnumerator();
+			}
+
+			private IEnumerable<int> Yielder() {
+				int i = 0;
+				while (true) {
+					if (primes.Count > i) {
+						yield return primes[i];
+					} else {
+						Advance();
+						yield return primes[i];
+					}
+					++i;
+				}
+			}
+
+			private void Advance() {
+				internalEnumerator.MoveNext();
+				primes.Add(internalEnumerator.Current);
+				primesHash.Add(internalEnumerator.Current);
+			}
+
+			/// <summary>
+			/// Generates all primes.
+			/// </summary>
+			private IEnumerable<int> PrimeGen() {
+				yield return 2;
+
+				int i = 3;
+				while (true) {
+					int limit = (int) Math.Ceiling(Math.Sqrt(i));
+					if (!primes.Skip(1).TakeWhile(x => x <= limit).Where(x => i % x == 0).Any()) {
+						// Note that since the generator is only used by the Advance method,
+						// we can count on the new prime being installed in primes before the
+						// next pass through the iteration.
+						//
+						// Skip(1): None of the numbers we're looking at will be divisible by 2.
+						yield return i;
+					}
+					i += 2;
+				}
 			}
 		}
+
+		static Util() {
+			Primes = new PrimeSeq();
+		}
+
+		public static PrimeSeq Primes { get; private set; }
 	}
 
 	public static class ChooseExt
@@ -147,29 +216,33 @@ namespace euler
 		/// <summary>
 		/// Return all combinations of size c from the elements in Seq.
 		/// This is calculated on a streaming basis, so it will return combinations of infinitely-sized
-		/// input sequences. The combinations are by index, not by value.
+		/// input sequences. The combinations are by index, not by value. It is an error to pass 
+		/// a numToChoose greater than the number of elements in the sequence.
 		/// </summary>
 		/// <param name="seq">A sequence, possibly infinitely long.</param>
 		/// <param name="numToChoose">The number of elements to choose from.</param>
 		/// <typeparam name="T">The type of object in the sequence we are choosing against.</typeparam>
 		public static IEnumerable<IEnumerable<T>> Choose<T>(this IEnumerable<T> seq, int numToChoose) {
-			int i = numToChoose - 1;
-			while (true) {
-				var lastElement = seq.ElementAtOrDefault(i);
-				if (lastElement == null) {
-					yield break;
+			if (numToChoose == 1) {
+				foreach (var x in seq) {
+					yield return x.Yield();
 				}
+				yield break;
+			}
 
-				if (numToChoose == 1) {
-					// We're only to gather one choice, so just iterate through.
-					yield return lastElement.Yield();
-				} else {
-					foreach (var childCombination in seq.Take(i).Choose(numToChoose - 1)) {
-						yield return Enumerable.Concat(childCombination, lastElement.Yield());
+			// Otherwise, build up a list of possible recursive Chooses. At any given index such that there
+			// are at least numToChoose elements in the list, the last index yielded from seq will be one
+			// of the members of the combination, and we'll recurse on the list. This has the effect of
+			// yielding combinations in sorted order.
+			var subList = new List<T>();
+			foreach (var x in seq) {
+				if (subList.Count >= numToChoose - 1) {
+					// Recurse.
+					foreach (var subCombination in subList.Choose(numToChoose - 1)) {
+						yield return Enumerable.Concat(subCombination, x.Yield());
 					}
 				}
-
-				++i;
+				subList.Add(x);
 			}
 		}
 	}
